@@ -1174,6 +1174,7 @@ static MSFilter* _video_stream_change_camera(VideoStream *stream, MSWebCam *cam,
 	bool_t encoder_has_builtin_converter = (!stream->pixconv && !stream->sizeconv);
 
 	if (stream->ms.sessions.ticker && stream->source){
+		ms_filter_call_method(stream->source,MS_VIDEO_CAPTURE_ON_UPDATE,(void *)1);
 		ms_ticker_detach(stream->ms.sessions.ticker,stream->source);
 		/*unlink source filters and subsequent post processing filters */
 		if (encoder_has_builtin_converter || (stream->source_performs_encoding == TRUE)) {
