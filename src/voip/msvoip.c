@@ -46,7 +46,7 @@ extern bool_t libmsandroiddisplay_init(MSFactory *factory);
 extern void libmsandroiddisplaybad_init(MSFactory *factory);
 extern void libmsandroidopengldisplay_init(MSFactory *factory);
 
-#if defined(__APPLE__) && defined(HAVE_VIDEO)
+#if defined(__APPLE__) && defined(VIDEO_ENABLED)
 extern void _register_videotoolbox_if_supported(MSFactory *factory);
 #endif
 
