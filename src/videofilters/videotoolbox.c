@@ -183,7 +183,7 @@ static void h264_enc_process(MSFilter *f) {
 		return;
 	}
 
-#if TARGET_OS_IPHONE
+#if 0 && TARGET_OS_IPHONE
 	CVPixelBufferPoolRef pixbuf_pool = VTCompressionSessionGetPixelBufferPool(ctx->session);
 	if(pixbuf_pool == NULL) {
 		ms_error("VideoToolbox: fails to get the pixel buffer pool");
@@ -201,7 +201,7 @@ static void h264_enc_process(MSFilter *f) {
 
 		ms_yuv_buf_init_from_mblk(&src_yuv_frame, frame);
 
-#if TARGET_OS_IPHONE
+#if 0 && TARGET_OS_IPHONE
 		CVPixelBufferPoolCreatePixelBuffer(NULL, pixbuf_pool, &pixbuf);
 #else
 		pixbuf_attr = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
@@ -364,7 +364,7 @@ static int h264_enc_get_config_list(MSFilter *f, const MSVideoConfiguration **co
 
 static int h264_enc_set_config_list(MSFilter *f, const MSVideoConfiguration **conf_list) {
 	const MSVideoConfiguration *conf = *conf_list;
-	((VTH264EncCtx *)f->data)->video_confs = conf ? conf : NULL;
+	((VTH264EncCtx *)f->data)->video_confs = conf ? conf : h264_video_confs;
 	return 0;
 }
 
@@ -405,8 +405,6 @@ MSFilterDesc ms_vt_h264_enc = {
 	.uninit = h264_enc_uninit,
 	.methods = h264_enc_methods
 };
-
-MS_FILTER_DESC_EXPORT(ms_vt_h264_enc)
 
 
 
@@ -546,6 +544,15 @@ static bool_t h264_dec_init_decoder(VTH264DecCtx *ctx) {
 	return TRUE;
 }
 
+static void h264_dec_uninit_decoder(VTH264DecCtx *ctx) {
+	ms_message("VideoToolboxDecoder: uninitializing decoder");
+	VTDecompressionSessionInvalidate(ctx->session);
+	CFRelease(ctx->session);
+	CFRelease(ctx->format_desc);
+	ctx->session = NULL;
+	ctx->format_desc = NULL;
+}
+
 static void h264_dec_init(MSFilter *f) {
 	VTH264DecCtx *ctx = ms_new0(VTH264DecCtx, 1);
 	ms_queue_init(&ctx->queue);
@@ -651,12 +658,19 @@ static void h264_dec_process(MSFilter *f) {
 		timing_info.duration = kCMTimeInvalid;
 		timing_info.presentationTimeStamp = CMTimeMake(f->ticker->time, 1000);
 		timing_info.decodeTimeStamp = CMTimeMake(f->ticker->time, 1000);
-		CMSampleBufferCreateReady(NULL, stream, ctx->format_desc, 1, 1, &timing_info, 0, NULL, &sample);
+		CMSampleBufferCreate(
+			NULL, stream, TRUE, NULL, NULL,
+			ctx->format_desc, 1, 1, &timing_info,
+			0, NULL, &sample);
+
 		status = VTDecompressionSessionDecodeFrame(ctx->session, sample, 0, NULL, NULL);
 		CFRelease(sample);
 		if(status != noErr) {
-			ms_error("VideoToolboxDecoder: error while passing encoded frames to the decoder: %d", status);
 			CFRelease(stream);
+			ms_error("VideoToolboxDecoder: error while passing encoded frames to the decoder: %d", status);
+			if(status == kVTInvalidSessionErr) {
+				h264_dec_uninit_decoder(ctx);
+			}
 			goto fail;
 		}
 	}
@@ -704,13 +718,7 @@ static void h264_dec_uninit(MSFilter *f) {
 	VTH264DecCtx *ctx = (VTH264DecCtx *)f->data;
 
 	rfc3984_uninit(&ctx->unpacker);
-	if(ctx->session) {
-		VTDecompressionSessionInvalidate(ctx->session);
-		CFRelease(ctx->session);
-		CFRelease(ctx->format_desc);
-		ctx->session = NULL;
-		ctx->format_desc = NULL;
-	}
+	if(ctx->session) h264_dec_uninit_decoder(ctx);
 	ms_queue_flush(&ctx->queue);
 
 	ms_mutex_destroy(&ctx->mutex);
@@ -784,9 +792,15 @@ MSFilterDesc ms_vt_h264_dec = {
 };
 
 void _register_videotoolbox_if_supported(MSFactory *factory) {
-	if (VTCompressionSessionCreate != NULL) {
+	if (VTCompressionSessionCreate != NULL
+		&& VTDecompressionSessionCreate != NULL
+		&& CMVideoFormatDescriptionCreateFromH264ParameterSets != NULL) {
+		
 		ms_factory_register_filter(factory, &ms_vt_h264_enc);
 		ms_factory_register_filter(factory, &ms_vt_h264_dec);
+	} else {
+		ms_warning("Cannot register VideoToolbox filters. Those filters"
+			" require iOS 8 or MacOSX 10.8");
 	}
 }
 
