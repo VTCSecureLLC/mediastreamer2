@@ -219,6 +219,7 @@ endif
 if BUILD_VIDEO
 
 if BUILD_MACOSX
+libmediastreamer_voip_la_SOURCES+=	videofilters/videotoolbox.c
 
 noinst_LTLIBRARIES=libqtcapture_cocoa.la
 libqtcapture_cocoa_la_LIBTOOLFLAGS= --tag=CC
@@ -228,18 +229,6 @@ libqtcapture_cocoa_la_SOURCES = videofilters/qtcapture.m \
 					utils/opengles_display.c utils/opengles_display.h
 
 libmediastreamer_voip_la_LIBADD+=libqtcapture_cocoa.la
-nodist_libmediastreamer_voip_la_SOURCES = yuv2rgb.fs.h yuv2rgb.fs.h
-endif
-
-if BUILD_IOS
-libmediastreamer_voip_la_SOURCES+=	voip/scaler.c \
-					voip/ioshardware.m \
-					videofilters/iosdisplay.m \
-					videofilters/ioscapture.m \
-					utils/shaders.c \
-					utils/shaders.h \
-					utils/opengles_display.c \
-					utils/opengles_display.h
 nodist_libmediastreamer_voip_la_SOURCES = yuv2rgb.fs.h yuv2rgb.fs.h
 endif
 
@@ -306,6 +295,7 @@ libmediastreamer_voip_la_SOURCES+=	voip/rfc2429.h \
 					utils/bits_rw.c \
 					utils/x11_helper.c \
 					utils/stream_regulator.c utils/stream_regulator.h \
+					utils/h264utils.c utils/h264utils.h \
 					voip/layouts.c voip/layouts.h \
 					voip/video_preset_high_fps.c
 
@@ -385,7 +375,7 @@ AM_CPPFLAGS=\
 	-I$(top_srcdir)/src/audiofilters \
 	-I$(top_srcdir)/src/otherfilters \
 	-I$(top_srcdir)/src/videofilters \
-	$(ORTP_CFLAGS)   
+	$(ORTP_CFLAGS)
 
 AM_CFLAGS=\
 	$(STRICT_OPTIONS) \
@@ -451,12 +441,11 @@ AM_CFLAGS+=$(LIBUPNP_CFLAGS) -D_GNU_SOURCE
 libmediastreamer_voip_la_LIBADD+=	$(LIBUPNP_LIBS)
 endif
 
-if BUILD_IOS
-libmediastreamer_voip_la_LDFLAGS+=	-framework CoreGraphics
-endif
-
 if BUILD_MACOSX
 libmediastreamer_voip_la_LDFLAGS+=	-framework Cocoa -framework OpenGL -framework QuartzCore
+if BUILD_VIDEO
+libmediastreamer_voip_la_LDFLAGS+=	-framework VideoToolbox -framework CoreMedia
+endif
 endif
 
 AM_OBJCFLAGS=$(AM_CFLAGS)
