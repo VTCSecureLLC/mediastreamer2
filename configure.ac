@@ -815,7 +815,7 @@ if test "$ortp_enabled" = 'true'; then
 		fi
 	fi
 	if test "$external_ortp" = 'true'; then
-		PKG_CHECK_MODULES(ORTP, ortp >= 0.24.0, ,
+		PKG_CHECK_MODULES(ORTP, ortp >= 0.24.1, ,
 			[ AC_MSG_ERROR([Couldn't find ortp library]) ] )
 	fi
 else
@@ -932,16 +932,21 @@ if test "$v4l" = "yes" ; then
 		[libv4l2=yes]
 	)
 
-	PKG_CHECK_MODULES(LIBV4L2, libv4l2,
+	AS_IF([test "$libv4l2" != "no"],
+	[PKG_CHECK_MODULES(LIBV4L2, libv4l2,
 		[AC_DEFINE(HAVE_LIBV4L2,1,[Defined if we have libv4l2])
 		have_libv4l2=yes],
 		[echo "No libv4l2 found."]
 	)
-	PKG_CHECK_MODULES(LIBV4L1, libv4l1,
+	])
+	AS_IF([test "$libv4l1" != "no"],
+	[PKG_CHECK_MODULES(LIBV4L1, libv4l1,
 		[AC_DEFINE(HAVE_LIBV4L1,1,[Defined if we have libv4l1])
 		have_libv4l1=yes],
 		[echo "No libv4l1 found."]
 	)
+	])
+
 	PKG_CHECK_MODULES(LIBV4LCONVERT, libv4lconvert,
 		[AC_DEFINE(HAVE_LIBV4LCONVERT,1,[Defined if we have libv4lconvert])
 		have_libv4lconvert=yes],

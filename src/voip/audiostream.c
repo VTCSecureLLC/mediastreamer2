@@ -779,6 +779,7 @@ int audio_stream_start_from_io(AudioStream *stream, RtpProfile *profile, const c
 	int nchannels;
 	int err1,err2;
 	bool_t has_builtin_ec=FALSE;
+	bool_t resampler_missing = FALSE;
 
 	if (!ms_media_stream_io_is_consistent(io)) return -1;
 
@@ -803,6 +804,7 @@ int audio_stream_start_from_io(AudioStream *stream, RtpProfile *profile, const c
 		stream->dtmfgen=NULL;
 	rtp_session_signal_connect(rtps,"telephone-event",(RtpCallback)on_dtmf_received,stream);
 	rtp_session_signal_connect(rtps,"payload_type_changed",(RtpCallback)audio_stream_payload_type_changed,stream);
+	rtp_session_set_dscp(rtps, stream->ms.dscp);
 
 	if (stream->ms.state==MSStreamPreparing){
 		/*we were using the dummy preload graph, destroy it but keep sound filters unless no soundcard is given*/
@@ -824,6 +826,7 @@ int audio_stream_start_from_io(AudioStream *stream, RtpProfile *profile, const c
 	} else {
 		stream->soundread=ms_factory_create_filter(stream->ms.factory, MS_FILE_PLAYER_ID);
 		stream->read_resampler=ms_factory_create_filter(stream->ms.factory, MS_RESAMPLE_ID);
+		resampler_missing = stream->read_resampler == NULL;
 	}
 	if (io->output.type == MSResourceSoundcard) {
 		if (stream->soundwrite==NULL)
@@ -962,7 +965,7 @@ int audio_stream_start_from_io(AudioStream *stream, RtpProfile *profile, const c
 	if (err1 != 0 || err2 != 0){
 		/* need to add resampler*/
 		if (stream->read_resampler == NULL) stream->read_resampler = ms_factory_create_filter(stream->ms.factory, MS_RESAMPLE_ID);
-
+		resampler_missing = stream->read_resampler == NULL;
 	}
 
 	err1 = ms_filter_call_method(stream->soundwrite, MS_FILTER_SET_SAMPLE_RATE, &sample_rate);
@@ -970,6 +973,12 @@ int audio_stream_start_from_io(AudioStream *stream, RtpProfile *profile, const c
 	if (err1 !=0 || err2 != 0){
 		/* need to add resampler*/
 		if (stream->write_resampler == NULL) stream->write_resampler = ms_factory_create_filter(stream->ms.factory, MS_RESAMPLE_ID);
+		resampler_missing = stream->write_resampler == NULL;
+	}
+	
+	if (resampler_missing){
+		ms_fatal("AudioStream: no resampler implementation found, but resampler is required to perform the AudioStream. "
+			"Does mediastreamer2 was compiled with libspeex dependency ?");
 	}
 
 	if (stream->ec){
