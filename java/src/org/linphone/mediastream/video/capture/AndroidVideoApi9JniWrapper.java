@@ -51,8 +51,30 @@ public class AndroidVideoApi9JniWrapper {
 		return AndroidVideoApi5JniWrapper.selectNearestResolutionAvailableForCamera(cameraId, requestedW, requestedH);
 	}
 	
+	static Camera camera_s;
+	static int cam_id;
+	public  static boolean allowStop = false;
+	public static void onVideoUpdating(int id)
+	{
+		AndroidVideoApi9JniWrapper.allowStop = false;
+	}
+	
 	public static Object startRecording(int cameraId, int width, int height, int fps, int rotation, final long nativePtr) {
 		Log.d("startRecording(" + cameraId + ", " + width + ", " + height + ", " + fps + ", " + rotation + ", " + nativePtr + ")");
+		AndroidVideoApi9JniWrapper.allowStop = true;
+		AndroidVideoApi5JniWrapper.isRecording = true;
+
+		if(AndroidVideoApi9JniWrapper.camera_s != null) {
+			if(cameraId != AndroidVideoApi9JniWrapper.cam_id)
+			{
+				AndroidVideoApi5JniWrapper.isRecording = false;
+				AndroidVideoApi8JniWrapper.stopRecording(AndroidVideoApi9JniWrapper.camera_s);
+			}
+			else {
+				setCameraDisplayOrientation(rotation, cameraId, AndroidVideoApi9JniWrapper.camera_s);
+				return AndroidVideoApi9JniWrapper.camera_s;
+			}
+		}
 		try {
 		Camera camera = Camera.open(cameraId); 
 		Parameters params = camera.getParameters();
@@ -87,6 +109,8 @@ public class AndroidVideoApi9JniWrapper {
 		camera.startPreview();
 		AndroidVideoApi5JniWrapper.isRecording = true;
 		Log.d("Returning camera object: " + camera);
+		AndroidVideoApi9JniWrapper.cam_id = cameraId;
+		AndroidVideoApi9JniWrapper.camera_s = camera;
 		return camera; 
 		} catch (Exception exc) {
 			exc.printStackTrace();
@@ -96,7 +120,10 @@ public class AndroidVideoApi9JniWrapper {
 	
 	public static void stopRecording(Object cam) {
 		AndroidVideoApi5JniWrapper.isRecording = false;
-		AndroidVideoApi8JniWrapper.stopRecording(cam);
+		if(AndroidVideoApi9JniWrapper.allowStop) {
+			AndroidVideoApi8JniWrapper.stopRecording(cam);
+			AndroidVideoApi9JniWrapper.camera_s = null;
+		}
 	} 
 	
 	public static void setPreviewDisplaySurface(Object cam, Object surf) {

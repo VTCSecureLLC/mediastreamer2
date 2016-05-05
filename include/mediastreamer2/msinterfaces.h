@@ -76,6 +76,8 @@ struct _MSVideoDisplayDecodingSupport {
 #define MS_VIDEO_DISPLAY_SET_NATIVE_WINDOW_ID \
 	MS_FILTER_METHOD(MSFilterVideoDisplayInterface,4,void*)
 
+#define MS_VIDEO_CAPTURE_ON_UPDATE \
+	MS_FILTER_METHOD(MSFilterVideoDisplayInterface,12,void*)
 
 /**scale factor of the local view */
 #define MS_VIDEO_DISPLAY_SET_LOCAL_VIEW_SCALEFACTOR \

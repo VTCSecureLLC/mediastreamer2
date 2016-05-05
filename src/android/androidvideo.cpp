@@ -215,6 +215,17 @@ static int video_capture_get_pix_fmt(MSFilter *f, void *data){
 	return 0;
 }
 
+static int video_capture_updating(MSFilter *f, void *arg) {
+	AndroidReaderContext *d = (AndroidReaderContext *) f->data;
+	JNIEnv *env = ms_get_jni_env();
+	//int i = ((AndroidWebcamConfig*)d->webcam->data)->id;
+	env->CallStaticVoidMethod(d->helperClass,
+							  env->GetStaticMethodID(d->helperClass,"onVideoUpdating", "(I)V"),
+							  (jint)1);
+	return 0;
+
+}
+
 // Java will give us a pointer to capture preview surface.
 static int video_set_native_preview_window(MSFilter *f, void *arg) {
 	AndroidReaderContext* d = (AndroidReaderContext*) f->data;
@@ -374,6 +385,7 @@ static MSFilterMethod video_capture_methods[]={
 		{	MS_VIDEO_DISPLAY_SET_NATIVE_WINDOW_ID , &video_set_native_preview_window },//preview is managed by capture filter
 		{	MS_VIDEO_DISPLAY_GET_NATIVE_WINDOW_ID , &video_get_native_preview_window },
 		{   MS_VIDEO_CAPTURE_SET_DEVICE_ORIENTATION, &video_set_device_rotation },
+		{   MS_VIDEO_CAPTURE_ON_UPDATE, &video_capture_updating },
 		{   MS_VIDEO_CAPTURE_SET_AUTOFOCUS, &video_capture_set_autofocus },
 		{	0,0 }
 };
