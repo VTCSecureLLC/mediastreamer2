@@ -171,6 +171,7 @@ set(VOIP_SOURCE_FILES_C
 	voip/bitratedriver.c
 	voip/ice.c
 	voip/mediastream.c
+	voip/msiframerequestslimiter.c
 	voip/msmediaplayer.c
 	voip/msvoip.c
 	voip/private.h
