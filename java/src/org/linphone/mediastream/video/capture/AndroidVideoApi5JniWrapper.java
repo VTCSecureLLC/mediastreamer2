@@ -41,7 +41,7 @@ public class AndroidVideoApi5JniWrapper {
 	
 	static public int detectCameras(int[] indexes, int[] frontFacing, int[] orientation) {
 		Log.d("detectCameras\n");
-		AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras(false);
+		AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
 		
 		int nextIndex = 0;
 		for (AndroidCamera androidCamera : cameras) {
@@ -136,7 +136,7 @@ public class AndroidVideoApi5JniWrapper {
 			requestedW = t;
 		}
 				
-		AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras(false);
+		AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
 		List<AndroidCamera.Size> supportedSizes = null;
 		for(AndroidCamera c: cameras) {
 			if (c.id == id)

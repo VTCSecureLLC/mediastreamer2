@@ -32,8 +32,7 @@ import org.linphone.mediastream.Version;
  */
 public class AndroidCameraConfiguration {
 	public static AndroidCamera[] retrieveCameras() {
-		initCamerasCache(true);
-		return camerasCache;
+		return retrieveCameras(true);
 	}
 
 	public static AndroidCamera[] retrieveCameras(boolean cameraTwoEnabled) {
@@ -42,17 +41,15 @@ public class AndroidCameraConfiguration {
 	}
 	
 	public static boolean hasSeveralCameras() {
-		initCamerasCache(true);
+		return hasSeveralCameras(true);
+	}
+	public static boolean hasSeveralCameras(boolean cameraTwoEnabled) {
+		initCamerasCache(cameraTwoEnabled);
 		return camerasCache.length > 1;
 	}
 
 	public static boolean hasFrontCamera() {
-		initCamerasCache(true);
-		for (AndroidCamera cam:  camerasCache) {
-			if (cam.frontFacing) 
-				return true;
-		}
-		return false;
+		return hasFrontCamera(true);
 	}
 
 	public static boolean hasFrontCamera(boolean cameraTwoEnabled) {
@@ -88,15 +85,15 @@ public class AndroidCameraConfiguration {
 		}
 	}
 	
-	static AndroidCamera[] probeCamerasSDK5() {
+	private static AndroidCamera[] probeCamerasSDK5() {
 		return AndroidCameraConfigurationReader5.probeCameras();
 	}
 	
-	static  AndroidCamera[] probeCamerasSDK9() {
+	private static AndroidCamera[] probeCamerasSDK9() {
 		return AndroidCameraConfigurationReader9.probeCameras();
 	}
 
-	static AndroidCamera[] probeCamerasSDK21() {
+	private static AndroidCamera[] probeCamerasSDK21() {
 		return AndroidCameraConfigurationReader21.probeCameras();
 	}
 
@@ -105,12 +102,12 @@ public class AndroidCameraConfiguration {
 	 * @author Guillaume Beraudo
 	 *
 	 */
-	static public  class AndroidCamera {
-		static public class Size{
+	public static class AndroidCamera {
+		public static class Size {
 			public final int width;
 			public final int height;
 
-			public Size(int w, int h){
+			public Size(int w, int h) {
 				this.width = w;
 				this.height = h;
 			}
