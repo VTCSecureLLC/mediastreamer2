@@ -32,7 +32,7 @@ import org.linphone.mediastream.Version;
  */
 public class AndroidCameraConfiguration {
 	public static AndroidCamera[] retrieveCameras() {
-		return retrieveCameras(true);
+		return retrieveCameras(false);
 	}
 
 	public static AndroidCamera[] retrieveCameras(boolean cameraTwoEnabled) {
