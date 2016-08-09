@@ -42,12 +42,17 @@ public class AndroidCameraConfigurationReader21 {
 					}
 					int camOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 					StreamConfigurationMap configs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-					android.util.Size[] supportedSizes = configs.getOutputSizes(ImageFormat.JPEG);
-					List<AndroidCamera.Size> supportedPreviewSizes = new ArrayList<AndroidCamera.Size>(supportedSizes.length);
-					for (int j = 0; j < supportedSizes.length; j++) {
-						android.util.Size size = supportedSizes[j];
-						supportedPreviewSizes.add(new AndroidCamera.Size(size.getWidth(), size.getHeight()));
-					}
+                    List<AndroidCamera.Size> supportedPreviewSizes = new ArrayList<AndroidCamera.Size>();
+                    for(int config: configs.getOutputFormats()){
+                        android.util.Size[] supportedSizes = configs.getOutputSizes(config);
+                        for (int j = 0; j < supportedSizes.length; j++) {
+                            android.util.Size size = supportedSizes[j];
+                            AndroidCamera.Size sizeCamera = new AndroidCamera.Size(size.getWidth(), size.getHeight());
+                            if(!supportedPreviewSizes.contains(sizeCamera)){
+                                supportedPreviewSizes.add(sizeCamera);
+                            }
+                        }
+                    }
 
 					cam.add(new AndroidCamera(i, frontFacing, supportedPreviewSizes, camOrientation));
 					numOfAvailableCameras++;
